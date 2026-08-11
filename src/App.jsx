@@ -9,23 +9,44 @@ import cteibLogo from './cteibLogo';
 const coachNav=[['/','Inicio',Home],['/calendar','Calendario',CalendarDays],['/sessions','Sesiones',Dumbbell],['/attendance','Asistencia',ClipboardCheck],['/wellness','Wellness',HeartPulse],['/competitions','Competiciones',Medal],['/athletes','Nadadores',Users]];
 const athleteNav=[['/','Inicio',Home],['/calendar','Calendario',CalendarDays],['/sessions','Sesiones',Dumbbell],['/wellness','Wellness',HeartPulse],['/competitions','Competiciones',Medal]];
 
-function Logo({compact=false}){return <div className={compact?'cteib-logo compact':'cteib-logo'}><img src={cteibLogo} alt="CTEIB Natació"/><div className="logo-fallback" aria-hidden="true"><strong>CTEIB</strong><b>NATACIÓ</b></div></div>}
+function Logo({compact=false}){return <div className={compact?'cteib-logo compact':'cteib-logo'}><img src={cteibLogo} alt="CTEIB Natació"/></div>}
 
 function Login(){
- const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [error,setError]=useState(''); const [loading,setLoading]=useState(false); const [showPassword,setShowPassword]=useState(false);
- const submit=async(e)=>{e.preventDefault();setError('');setLoading(true);const{error:signInError}=await supabase.auth.signInWithPassword({email:email.trim(),password});if(signInError)setError('Correo o contraseña incorrectos.');setLoading(false)};
+ const [loginType,setLoginType]=useState('coach');
+ const [username,setUsername]=useState('');
+ const [password,setPassword]=useState('');
+ const [error,setError]=useState('');
+ const [loading,setLoading]=useState(false);
+ const [showPassword,setShowPassword]=useState(false);
+
+ const submit=async(e)=>{
+  e.preventDefault();
+  setError('');
+  setLoading(true);
+  const clean=username.trim().toLowerCase();
+  const email=clean.includes('@')?clean:`${clean}@cteibnatacio.app`;
+  const{error:signInError}=await supabase.auth.signInWithPassword({email,password});
+  if(signInError)setError('Usuario o contraseña incorrectos.');
+  setLoading(false);
+ };
+
  return <main className="login-page login-v2">
   <section className="login-panel">
    <div className="login-inner">
     <Logo/>
-    <h1>Swim Performance Hub</h1><p className="login-subtitle">Programa de natación CTEIB</p><p className="login-intro">Inicia sesión para continuar</p>
+    <h1>Swim Performance Hub</h1><p className="login-subtitle">Programa de natación CTEIB</p>
+    <div className="role-switch" role="tablist" aria-label="Tipo de acceso">
+      <button type="button" className={loginType==='coach'?'active':''} onClick={()=>{setLoginType('coach');setUsername('')}}>Entrenador</button>
+      <button type="button" className={loginType==='athlete'?'active':''} onClick={()=>{setLoginType('athlete');setUsername('')}}>Nadador</button>
+    </div>
+    <p className="login-intro">Acceso como {loginType==='coach'?'entrenador':'nadador'}</p>
     <form onSubmit={submit}>
-     <label>Correo electrónico<input value={email} onChange={e=>setEmail(e.target.value)} type="email" autoComplete="username" placeholder="tu@correo.com" required/></label>
+     <label>Usuario<input value={username} onChange={e=>setUsername(e.target.value)} type="text" autoComplete="username" placeholder={loginType==='coach'?'entrenador':'nadador1'} required/></label>
      <label>Contraseña<div className="password-field"><input value={password} onChange={e=>setPassword(e.target.value)} type={showPassword?'text':'password'} autoComplete="current-password" required/><button type="button" aria-label="Mostrar contraseña" onClick={()=>setShowPassword(v=>!v)}>{showPassword?<EyeOff size={19}/>:<Eye size={19}/>}</button></div></label>
      {error&&<div className="error">{error}</div>}
      <button className="primary login-submit" type="submit" disabled={loading}>{loading?'Entrando…':'Iniciar sesión'}</button>
     </form>
-    <p className="login-help">Acceso exclusivo para deportistas y personal técnico del programa.</p>
+    <p className="login-help">Puedes entrar solo con tu usuario. No es necesario escribir @cteibnatacio.app.</p>
    </div>
   </section>
   <section className="login-showcase">
