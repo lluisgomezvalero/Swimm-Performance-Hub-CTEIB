@@ -1,0 +1,1 @@
+window.SWIM_DEFAULT={users:[{id:'coach1',username:'entrenador',password:'1234',name:'Entrenador CTEIB',role:'coach'},{id:'ath1',username:'nadador',password:'1234',name:'Nadador Demo',role:'athlete'},{id:'ath2',username:'nadador2',password:'1234',name:'Nadador 2',role:'athlete'}],events:[],wellness:[],trainingResponses:[],competitionReviews:[],attendance:[]};
