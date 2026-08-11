@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { CalendarDays, ClipboardCheck, Dumbbell, HeartPulse, Home, LogOut, Medal, Users } from 'lucide-react';
+import { supabase } from './lib/supabase';
 
 const coachNav = [
   ['/', 'Inicio', Home],
@@ -19,17 +20,21 @@ const athleteNav = [
   ['/competitions', 'Competiciones', Medal],
 ];
 
-function Login({ onLogin }) {
-  const [user, setUser] = useState('');
+function Login() {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const submit = (e) => {
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
     e.preventDefault();
-    const normalized = user.trim().toLowerCase();
-    if (normalized === 'entrenador' && password === '1234') return onLogin({ id: 'coach-1', name: 'Entrenador CTEIB', role: 'coach' });
-    if (normalized === 'nadador' && password === '1234') return onLogin({ id: 'athlete-1', name: 'Nadador Demo', role: 'athlete' });
-    setError('Usuario o contraseña incorrectos.');
+    setError('');
+    setLoading(true);
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (signInError) setError('Correo o contraseña incorrectos.');
+    setLoading(false);
   };
+
   return <main className="login-page">
     <section className="login-brand">
       <img src="/assets/cteib-natacio-logo.png" alt="CTEIB Natació" />
@@ -38,17 +43,13 @@ function Login({ onLogin }) {
       <p>Seguimiento diario de wellness, entrenamiento, asistencia y competición.</p>
     </section>
     <section className="login-card">
-      <div><span className="eyebrow">Acceso</span><h2>Bienvenido</h2><p>Inicia sesión para acceder a tu panel.</p></div>
+      <div><span className="eyebrow">Acceso</span><h2>Bienvenido</h2><p>Inicia sesión con tu cuenta del programa.</p></div>
       <form onSubmit={submit}>
-        <label>Usuario<input value={user} onChange={e=>setUser(e.target.value)} autoComplete="username" required /></label>
+        <label>Correo electrónico<input value={email} onChange={e=>setEmail(e.target.value)} type="email" autoComplete="username" required /></label>
         <label>Contraseña<input value={password} onChange={e=>setPassword(e.target.value)} type="password" autoComplete="current-password" required /></label>
         {error && <div className="error">{error}</div>}
-        <button className="primary" type="submit">Entrar</button>
+        <button className="primary" type="submit" disabled={loading}>{loading ? 'Entrando…' : 'Entrar'}</button>
       </form>
-      <div className="demo-actions">
-        <button onClick={()=>onLogin({ id:'coach-1', name:'Entrenador CTEIB', role:'coach' })}>Entrar como entrenador</button>
-        <button onClick={()=>onLogin({ id:'athlete-1', name:'Nadador Demo', role:'athlete' })}>Entrar como nadador</button>
-      </div>
     </section>
   </main>;
 }
@@ -62,7 +63,7 @@ function Dashboard({ role }) {
     ? [['Wellness hoy','0'],['Borg medio','—'],['Sesiones registradas','0'],['Valoraciones','0']]
     : [['Wellness','Pendiente'],['Próxima sesión','—'],['Último Borg','—'],['Próxima competición','—']];
   return <>
-    <section className="hero-card"><span className="eyebrow">{role==='coach'?'Panel de entrenador':'Panel de nadador'}</span><h2>{role==='coach'?'Control del programa':'Tu seguimiento diario'}</h2><p>Esta es ya la nueva base React. En los siguientes pasos conectaremos los datos reales con Supabase.</p></section>
+    <section className="hero-card"><span className="eyebrow">{role==='coach'?'Panel de entrenador':'Panel de nadador'}</span><h2>{role==='coach'?'Control del programa':'Tu seguimiento diario'}</h2><p>La app ya está conectada a Supabase. Ahora iremos sustituyendo estos datos de ejemplo por información real.</p></section>
     <section className="stats-grid">{cards.map(([label,value])=><article className="stat-card" key={label}><span>{label}</span><strong>{value}</strong></article>)}</section>
   </>;
 }
@@ -99,5 +100,35 @@ function Shell({ user, onLogout }) {
 
 export default function App() {
   const [user, setUser] = useState(null);
-  return user ? <Shell user={user} onLogout={()=>setUser(null)} /> : <Login onLogin={setUser} />;
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProfile = async (session) => {
+      if (!session?.user) {
+        if (mounted) { setUser(null); setLoading(false); }
+        return;
+      }
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, role, active')
+        .eq('id', session.user.id)
+        .single();
+      if (mounted) {
+        if (!error && profile?.active) setUser({ id: profile.id, name: profile.full_name || session.user.email, role: profile.role, email: session.user.email });
+        else setUser(null);
+        setLoading(false);
+      }
+    };
+
+    supabase.auth.getSession().then(({ data }) => loadProfile(data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => loadProfile(session));
+    return () => { mounted = false; listener.subscription.unsubscribe(); };
+  }, []);
+
+  const logout = async () => { await supabase.auth.signOut(); };
+
+  if (loading) return <main className="login-page"><section className="login-card"><h2>Cargando…</h2></section></main>;
+  return user ? <Shell user={user} onLogout={logout} /> : <Login />;
 }
