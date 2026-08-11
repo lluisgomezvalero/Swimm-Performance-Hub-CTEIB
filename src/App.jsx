@@ -22,6 +22,8 @@ const athleteNav = [
   ['/competitions', 'Competiciones', Medal],
 ];
 
+const logoUrl = `${import.meta.env.BASE_URL}assets/cteib-natacio-logo.png`;
+
 function Login({ onDemoLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -41,7 +43,7 @@ function Login({ onDemoLogin }) {
 
   return <main className="login-page">
     <section className="login-brand">
-      <img src={`${import.meta.env.BASE_URL}assets/cteib-natacio-logo.png`} alt="CTEIB Natació" />
+      <img src={logoUrl} alt="CTEIB Natació" />
       <span>Swim Performance Hub</span>
       <h1>Programa de natación CTEIB</h1>
       <p>Seguimiento diario de wellness, entrenamiento, asistencia y competición.</p>
@@ -83,7 +85,7 @@ function Shell({ user, onLogout }) {
   const activeTitle = useMemo(()=>nav.find(([path])=>path===location.pathname)?.[1] || 'Inicio',[location.pathname, nav]);
   return <div className="app-shell">
     <aside className="sidebar">
-      <div className="brand-row"><img src={`${import.meta.env.BASE_URL}assets/cteib-natacio-logo.png`} alt="CTEIB Natació"/><div><strong>Programa de natación CTEIB</strong><span>Swim Performance Hub</span></div></div>
+      <div className="brand-row"><img src={logoUrl} alt="CTEIB Natació"/><div><strong>Programa de natación CTEIB</strong><span>Swim Performance Hub</span></div></div>
       <nav>{nav.map(([path,label,Icon])=><button key={path} className={location.pathname===path?'active':''} onClick={()=>navigate(path)}><Icon size={19}/><span>{label}</span></button>)}</nav>
       <button className="logout" onClick={onLogout}><LogOut size={18}/>Cerrar sesión</button>
     </aside>
