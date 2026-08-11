@@ -22,7 +22,7 @@ const athleteNav = [
   ['/competitions', 'Competiciones', Medal],
 ];
 
-const logoUrl = `${import.meta.env.BASE_URL}assets/cteib-natacio-logo.png`;
+const logoUrl = `${import.meta.env.BASE_URL}assets/cteib-natacio-logo.webp`;
 
 function Login({ onDemoLogin }) {
   const [username, setUsername] = useState('');
@@ -104,7 +104,10 @@ function Shell({ user, onLogout }) {
         </Routes>
       </div>
     </main>
-    <nav className="bottom-nav">{nav.slice(0,5).map(([path,label,Icon])=><button key={path} className={location.pathname===path?'active':''} onClick={()=>navigate(path)}><Icon size={21}/><span>{label}</span></button>)}</nav>
+    <nav className="bottom-nav">
+      {nav.slice(0,5).map(([path,label,Icon])=><button key={path} className={location.pathname===path?'active':''} onClick={()=>navigate(path)}><Icon size={21}/><span>{label}</span></button>)}
+      <button className="mobile-logout" type="button" onClick={onLogout}><LogOut size={21}/><span>Cerrar</span></button>
+    </nav>
   </div>;
 }
 
