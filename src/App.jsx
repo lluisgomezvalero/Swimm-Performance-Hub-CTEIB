@@ -4,6 +4,7 @@ import { CalendarDays, ClipboardCheck, Dumbbell, HeartPulse, Home, LogOut, Medal
 import { supabase } from './lib/supabase';
 import CalendarPage from './pages/CalendarPage';
 import SessionsPage from './pages/SessionsPage';
+import cteibLogo from '../assets/cteib-natacio-logo.png';
 
 const coachNav = [
   ['/', 'Inicio', Home],
@@ -39,7 +40,7 @@ function Login() {
 
   return <main className="login-page">
     <section className="login-brand">
-      <img src="/assets/cteib-natacio-logo.png" alt="CTEIB Natació" />
+      <img src={cteibLogo} alt="CTEIB Natació" />
       <span>Swim Performance Hub</span>
       <h1>Programa de natación CTEIB</h1>
       <p>Seguimiento diario de wellness, entrenamiento, asistencia y competición.</p>
@@ -77,7 +78,7 @@ function Shell({ user, onLogout }) {
   const activeTitle = useMemo(()=>nav.find(([path])=>path===location.pathname)?.[1] || 'Inicio',[location.pathname, nav]);
   return <div className="app-shell">
     <aside className="sidebar">
-      <div className="brand-row"><img src="/assets/cteib-natacio-logo.png" alt="CTEIB Natació"/><div><strong>Programa de natación CTEIB</strong><span>Swim Performance Hub</span></div></div>
+      <div className="brand-row"><img src={cteibLogo} alt="CTEIB Natació"/><div><strong>Programa de natación CTEIB</strong><span>Swim Performance Hub</span></div></div>
       <nav>{nav.map(([path,label,Icon])=><button key={path} className={location.pathname===path?'active':''} onClick={()=>navigate(path)}><Icon size={19}/><span>{label}</span></button>)}</nav>
       <button className="logout" onClick={onLogout}><LogOut size={18}/>Cerrar sesión</button>
     </aside>
