@@ -4,7 +4,7 @@ import { CalendarDays, ClipboardCheck, Dumbbell, HeartPulse, Home, LogOut, Medal
 import { supabase } from './lib/supabase';
 import CalendarPage from './pages/CalendarPage';
 import SessionsPage from './pages/SessionsPage';
-import cteibLogo from '../assets/cteib-natacio-logo.png';
+import cteibLogo from './cteibLogo';
 
 const coachNav = [
   ['/', 'Inicio', Home],
