@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { CalendarDays, ClipboardCheck, Dumbbell, HeartPulse, Home, LogOut, Medal, Users } from 'lucide-react';
 import { supabase } from './lib/supabase';
+import CalendarPage from './pages/CalendarPage';
+import SessionsPage from './pages/SessionsPage';
 
 const coachNav = [
   ['/', 'Inicio', Home],
@@ -63,7 +65,7 @@ function Dashboard({ role }) {
     ? [['Wellness hoy','0'],['Borg medio','—'],['Sesiones registradas','0'],['Valoraciones','0']]
     : [['Wellness','Pendiente'],['Próxima sesión','—'],['Último Borg','—'],['Próxima competición','—']];
   return <>
-    <section className="hero-card"><span className="eyebrow">{role==='coach'?'Panel de entrenador':'Panel de nadador'}</span><h2>{role==='coach'?'Control del programa':'Tu seguimiento diario'}</h2><p>La app ya está conectada a Supabase. Ahora iremos sustituyendo estos datos de ejemplo por información real.</p></section>
+    <section className="hero-card"><span className="eyebrow">{role==='coach'?'Panel de entrenador':'Panel de nadador'}</span><h2>{role==='coach'?'Control del programa':'Tu seguimiento diario'}</h2><p>Calendario y sesiones ya trabajan con Supabase. Los siguientes módulos se irán conectando a esta misma base.</p></section>
     <section className="stats-grid">{cards.map(([label,value])=><article className="stat-card" key={label}><span>{label}</span><strong>{value}</strong></article>)}</section>
   </>;
 }
@@ -84,8 +86,8 @@ function Shell({ user, onLogout }) {
       <div className="page-content">
         <Routes>
           <Route path="/" element={<Dashboard role={user.role}/>} />
-          <Route path="/calendar" element={<Placeholder title="Calendario" text="Aquí migraremos la vista mensual tipo Google Calendar y los eventos compartidos."/>} />
-          <Route path="/sessions" element={<Placeholder title="Sesiones" text="Aquí estarán las sesiones creadas por el entrenador y el registro de Borg, metros y comentarios."/>} />
+          <Route path="/calendar" element={<CalendarPage user={user}/>} />
+          <Route path="/sessions" element={<SessionsPage user={user}/>} />
           <Route path="/attendance" element={user.role==='coach'?<Placeholder title="Asistencia" text="Presente, tarde, justificada y no justificada, con colores y gestión exclusiva del entrenador."/>:<Navigate to="/" replace/>} />
           <Route path="/wellness" element={<Placeholder title="Wellness" text="Cuestionario diario, HRV y bloqueo tras responder."/>} />
           <Route path="/competitions" element={<Placeholder title="Competiciones" text="Valoración del 1 al 5 y motivo obligatorio si la respuesta es 1 o 2."/>} />
@@ -104,7 +106,6 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true;
-
     const loadProfile = async (session) => {
       if (!session?.user) {
         if (mounted) { setUser(null); setLoading(false); }
