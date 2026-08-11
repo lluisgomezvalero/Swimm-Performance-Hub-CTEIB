@@ -22,8 +22,8 @@ const athleteNav = [
   ['/competitions', 'Competiciones', Medal],
 ];
 
-function Login() {
-  const [email, setEmail] = useState('');
+function Login({ onDemoLogin }) {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -32,26 +32,32 @@ function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (signInError) setError('Correo o contraseña incorrectos.');
+    const clean = username.trim().toLowerCase();
+    const email = clean.includes('@') ? clean : `${clean}@cteibnatacio.app`;
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) setError('Usuario o contraseña incorrectos.');
     setLoading(false);
   };
 
   return <main className="login-page">
     <section className="login-brand">
-      <img src="/assets/cteib-natacio-logo.png" alt="CTEIB Natació" />
+      <img src={`${import.meta.env.BASE_URL}assets/cteib-natacio-logo.png`} alt="CTEIB Natació" />
       <span>Swim Performance Hub</span>
       <h1>Programa de natación CTEIB</h1>
       <p>Seguimiento diario de wellness, entrenamiento, asistencia y competición.</p>
     </section>
     <section className="login-card">
-      <div><span className="eyebrow">Acceso</span><h2>Bienvenido</h2><p>Inicia sesión con tu cuenta del programa.</p></div>
+      <div><span className="eyebrow">Acceso</span><h2>Bienvenido</h2><p>Inicia sesión para acceder a tu panel.</p></div>
       <form onSubmit={submit}>
-        <label>Correo electrónico<input value={email} onChange={e=>setEmail(e.target.value)} type="email" autoComplete="username" required /></label>
+        <label>Usuario<input value={username} onChange={e=>setUsername(e.target.value)} autoComplete="username" placeholder="entrenador" required /></label>
         <label>Contraseña<input value={password} onChange={e=>setPassword(e.target.value)} type="password" autoComplete="current-password" required /></label>
         {error && <div className="error">{error}</div>}
         <button className="primary" type="submit" disabled={loading}>{loading ? 'Entrando…' : 'Entrar'}</button>
       </form>
+      <div className="demo-actions">
+        <button type="button" onClick={()=>onDemoLogin({ id:'coach-demo', name:'Entrenador CTEIB', role:'coach', demo:true })}>Entrar como entrenador</button>
+        <button type="button" onClick={()=>onDemoLogin({ id:'athlete-demo', name:'Nadador Demo', role:'athlete', demo:true })}>Entrar como nadador</button>
+      </div>
     </section>
   </main>;
 }
@@ -77,7 +83,7 @@ function Shell({ user, onLogout }) {
   const activeTitle = useMemo(()=>nav.find(([path])=>path===location.pathname)?.[1] || 'Inicio',[location.pathname, nav]);
   return <div className="app-shell">
     <aside className="sidebar">
-      <div className="brand-row"><img src="/assets/cteib-natacio-logo.png" alt="CTEIB Natació"/><div><strong>Programa de natación CTEIB</strong><span>Swim Performance Hub</span></div></div>
+      <div className="brand-row"><img src={`${import.meta.env.BASE_URL}assets/cteib-natacio-logo.png`} alt="CTEIB Natació"/><div><strong>Programa de natación CTEIB</strong><span>Swim Performance Hub</span></div></div>
       <nav>{nav.map(([path,label,Icon])=><button key={path} className={location.pathname===path?'active':''} onClick={()=>navigate(path)}><Icon size={19}/><span>{label}</span></button>)}</nav>
       <button className="logout" onClick={onLogout}><LogOut size={18}/>Cerrar sesión</button>
     </aside>
@@ -108,7 +114,7 @@ export default function App() {
     let mounted = true;
     const loadProfile = async (session) => {
       if (!session?.user) {
-        if (mounted) { setUser(null); setLoading(false); }
+        if (mounted) { setUser(current => current?.demo ? current : null); setLoading(false); }
         return;
       }
       const { data: profile, error } = await supabase
@@ -128,8 +134,11 @@ export default function App() {
     return () => { mounted = false; listener.subscription.unsubscribe(); };
   }, []);
 
-  const logout = async () => { await supabase.auth.signOut(); };
+  const logout = async () => {
+    if (user?.demo) { setUser(null); return; }
+    await supabase.auth.signOut();
+  };
 
   if (loading) return <main className="login-page"><section className="login-card"><h2>Cargando…</h2></section></main>;
-  return user ? <Shell user={user} onLogout={logout} /> : <Login />;
+  return user ? <Shell user={user} onLogout={logout} /> : <Login onDemoLogin={setUser} />;
 }
