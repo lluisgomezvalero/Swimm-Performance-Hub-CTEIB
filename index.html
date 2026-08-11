@@ -1,2 +1,15 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#4c1d95"><title>Programa de natación CTEIB · Swim Performance Hub</title><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="assets/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css?v=1.4"></head><body><section id="loginView" class="login-shell"><div class="login-brand-panel"><div class="brand-mark-wrap"><img src="assets/cteib-natacio-logo.png" alt="CTEIB Natació" class="brand-logo"></div><span class="eyebrow">Swim Performance Hub</span><h1>Programa de natación CTEIB</h1><p>Seguimiento diario de wellness, carga, asistencia y competición.</p></div><div class="login-card"><div><span class="eyebrow">Acceso</span><h2>Bienvenido</h2><p class="muted">Inicia sesión como entrenador o nadador.</p></div><form id="loginForm" class="stack"><label>Usuario<input id="loginUser" autocomplete="username" required></label><label>Contraseña<div class="password-wrap"><input id="loginPass" type="password" autocomplete="current-password" required><button class="icon-btn" id="togglePass" type="button">👁</button></div></label><p id="loginError" class="form-error" hidden></p><button class="primary full" type="submit">Entrar</button></form><div class="demo-logins"><button type="button" data-demo="coach">Entrar como entrenador</button><button type="button" data-demo="athlete">Entrar como nadador</button></div></div></section><section id="appView" hidden><aside class="sidebar"><div class="sidebar-brand"><img src="assets/cteib-natacio-logo.png" alt="CTEIB Natació"><div><strong>Programa de natación CTEIB</strong><span>Swim Performance Hub</span></div></div><nav id="desktopNav"></nav><button id="logoutBtn" class="logout-btn">Cerrar sesión</button></aside><main class="main-shell"><header class="topbar"><div><span class="eyebrow" id="roleLabel"></span><h2 id="pageTitle">Inicio</h2></div><div class="user-chip"><span id="userName"></span></div></header><div id="content"></div></main><nav id="mobileNav" class="mobile-nav"></nav></section><div id="modalRoot"></div><script src="data.js?v=1.4"></script><script src="app.js?v=1.4"></script><script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(()=>{});</script></body></html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#5b21b6" />
+    <link rel="icon" href="/assets/icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Programa de natación CTEIB · Swim Performance Hub</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
