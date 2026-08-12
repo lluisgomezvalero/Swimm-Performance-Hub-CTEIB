@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redirigiendo…</title>
+  <script>
+    (function () {
+      var pathSegmentsToKeep = 1;
+      var l = window.location;
+      var base = l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/');
+      var route = l.pathname.split('/').slice(1 + pathSegmentsToKeep).join('/');
+      var query = l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '';
+      l.replace(
+        l.protocol + '//' + l.host + base + '/?/' + route.replace(/&/g, '~and~') + query + l.hash
+      );
+    })();
+  </script>
+</head>
+<body></body>
+</html>
