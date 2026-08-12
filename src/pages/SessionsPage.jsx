@@ -1,50 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Plus, Waves } from 'lucide-react';
-import { createTraining, listEvents } from '../services/events';
-
+import { useEffect,useState } from 'react';
+import { CheckCircle2,Plus,Waves } from 'lucide-react';
+import { createTraining,listEvents } from '../services/events';
+import { supabase } from '../lib/supabase';
 const emptyForm={event_date:'',start_time:'',end_time:'',place:'',planned_meters:'',description:''};
-
-export default function SessionsPage({ user }){
-  const [events,setEvents]=useState([]);
-  const [form,setForm]=useState(emptyForm);
-  const [open,setOpen]=useState(false);
-  const [loading,setLoading]=useState(true);
-  const [saving,setSaving]=useState(false);
-  const [error,setError]=useState('');
-
-  async function refresh(){
-    try{setLoading(true);setEvents((await listEvents()).filter(e=>e.type==='training').sort((a,b)=>b.event_date.localeCompare(a.event_date)))}
-    catch(e){setError(e.message)}finally{setLoading(false)}
-  }
-  useEffect(()=>{refresh()},[]);
-
-  async function submit(e){
-    e.preventDefault();
-    try{
-      setSaving(true);setError('');
-      await createTraining(form,user.id);
-      setForm(emptyForm);setOpen(false);await refresh();
-    }catch(e){setError(e.message)}finally{setSaving(false)}
-  }
-
-  return <section>
-    <div className="section-toolbar">
-      <div><span className="eyebrow">Entrenamientos</span><h2>Sesiones</h2><p>Las sesiones creadas aquí aparecen automáticamente a los nadadores.</p></div>
-      {user.role==='coach'&&<button className="primary inline-action" onClick={()=>setOpen(v=>!v)}><Plus size={18}/>Añadir sesión</button>}
-    </div>
-    {error&&<div className="error">{error}</div>}
-    {open&&user.role==='coach'&&<form className="card session-form" onSubmit={submit}>
-      <h3>Nueva sesión de entrenamiento</h3>
-      <div className="form-grid">
-        <label>Fecha<input type="date" required value={form.event_date} onChange={e=>setForm({...form,event_date:e.target.value})}/></label>
-        <label>Hora inicio<input type="time" required value={form.start_time} onChange={e=>setForm({...form,start_time:e.target.value})}/></label>
-        <label>Hora fin<input type="time" required value={form.end_time} onChange={e=>setForm({...form,end_time:e.target.value})}/></label>
-        <label>Lugar<input value={form.place} onChange={e=>setForm({...form,place:e.target.value})}/></label>
-        <label>Metros previstos<input type="number" min="0" value={form.planned_meters} onChange={e=>setForm({...form,planned_meters:e.target.value})}/></label>
-      </div>
-      <label>Descripción<textarea rows="3" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label>
-      <div className="form-actions"><button type="button" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary" disabled={saving}>{saving?'Guardando…':'Guardar sesión'}</button></div>
-    </form>}
-    <div className="session-list">{loading?<div className="card">Cargando sesiones…</div>:events.length?events.map(e=><article className="card session-card" key={e.id}><div className="session-icon"><Waves size={20}/></div><div><h3>Entrenamiento</h3><p><strong>{new Date(`${e.event_date}T12:00:00`).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</strong></p><p>{e.start_time?.slice(0,5)}–{e.end_time?.slice(0,5)}{e.place?` · ${e.place}`:''}</p>{e.planned_meters&&<span className="pill">{e.planned_meters} m previstos</span>}{e.description&&<p>{e.description}</p>}</div></article>):<div className="card empty-state">Todavía no hay sesiones programadas.</div>}</div>
-  </section>
-}
+const borgText=['Reposo','Muy, muy suave','Muy suave','Suave','Moderado','Algo duro','Duro','Muy duro','Muy, muy duro','Extremadamente duro','Máximo'];
+const finished=e=>{const end=e.end_time||'23:59';return new Date()>=new Date(`${e.event_date}T${end}`)};
+export default function SessionsPage({user}){const[events,setEvents]=useState([]);const[responses,setResponses]=useState({});const[form,setForm]=useState(emptyForm);const[open,setOpen]=useState(false);const[loading,setLoading]=useState(true);const[saving,setSaving]=useState(false);const[error,setError]=useState('');const[answering,setAnswering]=useState(null);const[answer,setAnswer]=useState({borg:5,meters:'',comment:''});
+async function refresh(){try{setLoading(true);setError('');const ev=(await listEvents()).filter(e=>e.type==='training').sort((a,b)=>b.event_date.localeCompare(a.event_date));setEvents(ev);if(!user.demo){let q=supabase.from('training_responses').select('*');if(user.role==='athlete')q=q.eq('athlete_id',user.id);const{data,error:e}=await q;if(e)throw e;const map={};(data||[]).forEach(r=>{if(user.role==='athlete')map[r.event_id]=r;else(map[r.event_id]??=[]).push(r)});setResponses(map)}}catch(e){setError(e.message)}finally{setLoading(false)}}useEffect(()=>{refresh()},[user.id,user.role]);
+async function submit(e){e.preventDefault();try{setSaving(true);setError('');await createTraining(form,user.id);setForm(emptyForm);setOpen(false);await refresh()}catch(e){setError(e.message)}finally{setSaving(false)}}
+async function sendResponse(e,event){e.preventDefault();try{setSaving(true);setError('');const start=new Date(`${event.event_date}T${event.start_time}`),end=new Date(`${event.event_date}T${event.end_time}`);const duration=Math.max(0,Math.round((end-start)/60000));const{error:e2}=await supabase.from('training_responses').insert({event_id:event.id,athlete_id:user.id,borg:+answer.borg,meters:+answer.meters,duration_minutes:duration,comment:answer.comment.trim()||null});if(e2)throw e2;setAnswering(null);setAnswer({borg:5,meters:'',comment:''});await refresh()}catch(e){setError(e.code==='23505'?'Esta sesión ya está contestada.':e.message)}finally{setSaving(false)}}
+return <section><div className="section-toolbar"><div><span className="eyebrow">Entrenamientos</span><h2>Sesiones</h2><p>El entrenador programa la sesión y, al finalizar, cada nadador registra su esfuerzo y metros realizados.</p></div>{user.role==='coach'&&!user.demo&&<button className="primary inline-action" onClick={()=>setOpen(v=>!v)}><Plus size={18}/>Añadir sesión</button>}</div>{error&&<div className="error">{error}</div>}{open&&user.role==='coach'&&<form className="card session-form" onSubmit={submit}><h3>Nueva sesión de entrenamiento</h3><div className="form-grid"><label>Fecha<input type="date" required value={form.event_date} onChange={e=>setForm({...form,event_date:e.target.value})}/></label><label>Hora inicio<input type="time" required value={form.start_time} onChange={e=>setForm({...form,start_time:e.target.value})}/></label><label>Hora fin<input type="time" required value={form.end_time} onChange={e=>setForm({...form,end_time:e.target.value})}/></label><label>Lugar<input value={form.place} onChange={e=>setForm({...form,place:e.target.value})}/></label><label>Metros previstos<input type="number" min="0" value={form.planned_meters} onChange={e=>setForm({...form,planned_meters:e.target.value})}/></label></div><label>Descripción<textarea rows="3" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label><div className="form-actions"><button type="button" onClick={()=>setOpen(false)}>Cancelar</button><button className="primary" disabled={saving}>{saving?'Guardando…':'Guardar sesión'}</button></div></form>}<div className="session-list">{loading?<div className="card">Cargando sesiones…</div>:events.length?events.map(ev=>{const response=responses[ev.id];const canAnswer=user.role==='athlete'&&!user.demo&&finished(ev)&&!response;return <article className="card session-card" key={ev.id}><div className="session-icon"><Waves size={20}/></div><div className="session-body"><h3>Entrenamiento</h3><p><strong>{new Date(`${ev.event_date}T12:00:00`).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</strong></p><p>{ev.start_time?.slice(0,5)}–{ev.end_time?.slice(0,5)}{ev.place?` · ${ev.place}`:''}</p>{ev.planned_meters&&<span className="pill">{ev.planned_meters} m previstos</span>}{ev.description&&<p>{ev.description}</p>}{user.role==='athlete'&&response&&<div className="session-complete"><CheckCircle2 size={18}/><b>Sesión ya valorada</b><span>Borg {response.borg}/10 · {response.meters} m</span></div>}{canAnswer&&answering!==ev.id&&<button className="primary response-button" onClick={()=>{setAnswering(ev.id);setAnswer({borg:5,meters:ev.planned_meters||'',comment:''})}}>Registrar esfuerzo</button>}{canAnswer&&answering===ev.id&&<form className="training-response" onSubmit={e=>sendResponse(e,ev)}><label>Esfuerzo percibido · Borg CR10 <b>{answer.borg}/10 — {borgText[answer.borg]}</b><input type="range" min="0" max="10" step="1" value={answer.borg} onChange={e=>setAnswer({...answer,borg:+e.target.value})}/><small>0 = reposo · 3 = suave · 5 = algo duro · 7 = muy duro · 10 = esfuerzo máximo</small></label><label>Metros realizados<input type="number" min="0" required value={answer.meters} onChange={e=>setAnswer({...answer,meters:e.target.value})}/></label><label>Comentario opcional<textarea rows="2" value={answer.comment} onChange={e=>setAnswer({...answer,comment:e.target.value})}/></label><div className="form-actions"><button type="button" onClick={()=>setAnswering(null)}>Cancelar</button><button className="primary" disabled={saving}>{saving?'Guardando…':'Enviar valoración'}</button></div></form>}{user.role==='coach'&&!user.demo&&<div className="coach-responses"><b>{(response||[]).length} valoraciones recibidas</b>{(response||[]).map(r=><span key={r.id}>Borg {r.borg}/10 · {r.meters} m{r.comment?` · ${r.comment}`:''}</span>)}</div>}</div></article>}):<div className="card empty-state">Todavía no hay sesiones programadas.</div>}</div></section>}
