@@ -2,6 +2,7 @@ import { useEffect,useState } from 'react';
 import { CalendarDays,CheckCircle2,Clock3,MapPin,Plus,Ruler,Waves,X } from 'lucide-react';
 import { createTraining,listEvents } from '../services/events';
 import { supabase } from '../lib/supabase';
+import './SessionsPage.css';
 const emptyForm={event_date:'',start_time:'',end_time:'',place:'',planned_meters:'',description:''};
 const borgText=['Reposo','Muy, muy suave','Muy suave','Suave','Moderado','Algo duro','Duro','Muy duro','Muy, muy duro','Extremadamente duro','Máximo'];
 const finished=e=>{const end=e.end_time||'23:59';return new Date()>=new Date(`${e.event_date}T${end}`)};
