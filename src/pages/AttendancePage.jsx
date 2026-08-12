@@ -2,6 +2,7 @@ import { useEffect,useMemo,useState } from 'react';
 import { Check,Clock3,FileCheck2,RefreshCw,UserX } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { listEvents } from '../services/events';
+import './attendance.css';
 
 const statuses={
   present:{label:'Presente',icon:Check},
