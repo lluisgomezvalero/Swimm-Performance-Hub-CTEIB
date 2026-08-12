@@ -1,44 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect,useMemo,useState } from 'react';
+import { ChevronLeft,ChevronRight,X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { listEvents } from '../services/events';
-
-const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const weekDays = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-
-function isoDate(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`}
-function startOffset(date){const day=date.getDay(); return day===0?6:day-1;}
-
-export default function CalendarPage(){
-  const [cursor,setCursor]=useState(()=>new Date());
-  const [events,setEvents]=useState([]);
-  const [loading,setLoading]=useState(true);
-  const [error,setError]=useState('');
-
-  useEffect(()=>{(async()=>{try{setLoading(true);setEvents(await listEvents())}catch(e){setError(e.message)}finally{setLoading(false)}})()},[]);
-
-  const cells=useMemo(()=>{
-    const y=cursor.getFullYear(),m=cursor.getMonth();
-    const days=new Date(y,m+1,0).getDate();
-    const lead=startOffset(new Date(y,m,1));
-    const total=Math.ceil((lead+days)/7)*7;
-    return Array.from({length:total},(_,i)=>{const d=i-lead+1;return d>=1&&d<=days?{day:d,date:isoDate(y,m,d)}:null});
-  },[cursor]);
-
-  const byDate=useMemo(()=>events.reduce((acc,e)=>{(acc[e.event_date]??=[]).push(e);return acc},{}),[events]);
-  const prev=()=>setCursor(new Date(cursor.getFullYear(),cursor.getMonth()-1,1));
-  const next=()=>setCursor(new Date(cursor.getFullYear(),cursor.getMonth()+1,1));
-  const today=()=>setCursor(new Date());
-
-  return <section className="calendar-wrap">
-    <div className="section-toolbar">
-      <div><span className="eyebrow">Calendario compartido</span><h2>{monthNames[cursor.getMonth()]} {cursor.getFullYear()}</h2></div>
-      <div className="toolbar-actions"><button onClick={prev}><ChevronLeft size={18}/></button><button onClick={today}>Hoy</button><button onClick={next}><ChevronRight size={18}/></button></div>
-    </div>
-    {error&&<div className="error">{error}</div>}
-    {loading?<div className="card">Cargando calendario…</div>:<div className="calendar-card">
-      <div className="calendar-head">{weekDays.map(d=><div key={d}>{d}</div>)}</div>
-      <div className="calendar-grid">{cells.map((cell,i)=><div className={`calendar-cell ${!cell?'empty':''}`} key={i}>{cell&&<><span className="day-number">{cell.day}</span><div className="day-events">{(byDate[cell.date]||[]).map(e=><div key={e.id} className={`calendar-event ${e.type}`}><strong>{e.type==='training'?'Entrenamiento':'Competición'}</strong><span>{e.start_time?.slice(0,5)||''}{e.place?` · ${e.place}`:''}</span></div>)}</div></>}</div>)}</div>
-    </div>}
-    <div className="calendar-legend"><span><i className="dot training"></i>Entrenamiento</span><span><i className="dot competition"></i>Competición</span></div>
-  </section>
-}
+import './CalendarPage.css';
+const monthNames=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const weekDays=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const isoDate=(y,m,d)=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const startOffset=date=>date.getDay()===0?6:date.getDay()-1;
+const localToday=()=>new Date().toLocaleDateString('en-CA');
+export default function CalendarPage(){const[cursor,setCursor]=useState(()=>new Date());const[events,setEvents]=useState([]);const[selected,setSelected]=useState(localToday());const[loading,setLoading]=useState(true);const[error,setError]=useState('');const navigate=useNavigate();
+useEffect(()=>{(async()=>{try{setLoading(true);setEvents(await listEvents())}catch(e){setError(e.message)}finally{setLoading(false)}})()},[]);
+const cells=useMemo(()=>{const y=cursor.getFullYear(),m=cursor.getMonth(),days=new Date(y,m+1,0).getDate(),lead=startOffset(new Date(y,m,1)),total=Math.ceil((lead+days)/7)*7;return Array.from({length:total},(_,i)=>{const d=i-lead+1;return d>=1&&d<=days?{day:d,date:isoDate(y,m,d)}:null})},[cursor]);
+const byDate=useMemo(()=>events.reduce((a,e)=>{(a[e.event_date]??=[]).push(e);return a},{}),[events]);const selectedEvents=byDate[selected]||[];const go=e=>navigate(e.type==='training'?'/sessions':'/competitions');const choose=date=>setSelected(date);const prev=()=>setCursor(new Date(cursor.getFullYear(),cursor.getMonth()-1,1));const next=()=>setCursor(new Date(cursor.getFullYear(),cursor.getMonth()+1,1));const today=()=>{const n=new Date();setCursor(n);setSelected(localToday())};
+return <section className="calendar-wrap"><div className="section-toolbar"><div><span className="eyebrow">Calendario compartido</span><h2>{monthNames[cursor.getMonth()]} {cursor.getFullYear()}</h2><p>Entrenamientos y competiciones del programa.</p></div><div className="toolbar-actions"><button onClick={prev} aria-label="Mes anterior"><ChevronLeft size={18}/></button><button onClick={today}>Hoy</button><button onClick={next} aria-label="Mes siguiente"><ChevronRight size={18}/></button></div></div>{error&&<div className="error">{error}</div>}{loading?<div className="card">Cargando calendario…</div>:<><div className="calendar-card"><div className="calendar-head">{weekDays.map(d=><div key={d}>{d}</div>)}</div><div className="calendar-grid">{cells.map((cell,i)=><div onClick={()=>cell&&choose(cell.date)} className={`calendar-cell ${!cell?'empty':''} ${cell?.date===localToday()?'today':''} ${cell?.date===selected?'selected':''}`} key={i}>{cell&&<><span className="day-number">{cell.day}</span><div className="day-events">{(byDate[cell.date]||[]).slice(0,3).map(e=><button onClick={x=>{x.stopPropagation();choose(cell.date);go(e)}} key={e.id} className={`calendar-event ${e.type}`}><strong>{e.type==='training'?'Entrenamiento':'Competición'}</strong><span>{e.start_time?.slice(0,5)||''}{e.place?` · ${e.place}`:''}</span></button>)}{(byDate[cell.date]||[]).length>3&&<span className="calendar-event-more">+{byDate[cell.date].length-3}</span>}</div></>}</div>)}</div></div><div className="calendar-legend"><span><i className="dot training"/>Entrenamiento</span><span><i className="dot competition"/>Competición</span></div><section className="card mobile-day-panel"><div className="day-panel-head"><div><span className="eyebrow">Día seleccionado</span><h3>{new Date(`${selected}T12:00:00`).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}</h3></div>{selected!==localToday()&&<button onClick={()=>setSelected(localToday())} aria-label="Cerrar selección"><X size={18}/></button>}</div>{selectedEvents.length?<div className="day-panel-list">{selectedEvents.map(e=><button className={`day-panel-event ${e.type}`} key={e.id} onClick={()=>go(e)}><i className="event-dot"/><div><b>{e.type==='training'?'Entrenamiento':'Competición'}</b><span>{e.start_time?.slice(0,5)||'Sin hora'}{e.place?` · ${e.place}`:''}{e.planned_meters?` · ${e.planned_meters} m`:''}</span></div><ChevronRight size={18}/></button>)}</div>:<p className="day-panel-empty">No hay eventos este día.</p>}</section></>}</section>}
