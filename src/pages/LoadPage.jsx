@@ -1,0 +1,23 @@
+import { useEffect,useMemo,useState } from 'react';
+import { Activity,ArrowDownRight,ArrowUpRight,Gauge,RefreshCw,Ruler,Timer } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { useLanguage } from '../i18n';
+import './LoadPage.css';
+
+const daysAgo=n=>{const d=new Date();d.setDate(d.getDate()-n);return d};
+const sum=(arr,key)=>arr.reduce((a,x)=>a+(Number(typeof key==='function'?key(x):x[key])||0),0);
+const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null;
+
+export default function LoadPage(){
+  const{t}=useLanguage();const l=t.load;
+  const[responses,setResponses]=useState([]);const[athletes,setAthletes]=useState([]);const[loading,setLoading]=useState(true);const[error,setError]=useState('');
+  async function load(){setLoading(true);setError('');try{const since=daysAgo(35).toISOString();const[r,p]=await Promise.all([supabase.from('training_responses').select('id,athlete_id,borg,meters,duration_minutes,created_at').gte('created_at',since).order('created_at',{ascending:false}),supabase.from('profiles').select('id,full_name,active').eq('role','athlete').eq('active',true).order('full_name')]);if(r.error)throw r.error;if(p.error)throw p.error;setResponses(r.data||[]);setAthletes(p.data||[])}catch(e){setError(e.message)}finally{setLoading(false)}}
+  useEffect(()=>{load()},[]);
+  const data=useMemo(()=>{const now=Date.now(),d7=7*864e5,d14=14*864e5,d28=28*864e5;const current=responses.filter(x=>now-new Date(x.created_at).getTime()<=d7);const previous=responses.filter(x=>{const age=now-new Date(x.created_at).getTime();return age>d7&&age<=d14});const month=responses.filter(x=>now-new Date(x.created_at).getTime()<=d28);const loadOf=x=>(Number(x.borg)||0)*(Number(x.duration_minutes)||0);const currentLoad=sum(current,loadOf),previousLoad=sum(previous,loadOf);const trend=previousLoad?Math.round((currentLoad-previousLoad)/previousLoad*100):null;const rows=athletes.map(a=>{const r7=current.filter(x=>x.athlete_id===a.id),r28=month.filter(x=>x.athlete_id===a.id),rp=previous.filter(x=>x.athlete_id===a.id);const l7=sum(r7,loadOf),lp=sum(rp,loadOf);return{id:a.id,name:a.full_name,sessions:r7.length,meters:sum(r7,'meters'),avgBorg:avg(r7.map(x=>Number(x.borg)).filter(Number.isFinite)),load7:l7,load28:sum(r28,loadOf),trend:lp?Math.round((l7-lp)/lp*100):null}}).sort((a,b)=>b.load7-a.load7);return{sessions:current.length,meters:sum(current,'meters'),avgBorg:avg(current.map(x=>Number(x.borg)).filter(Number.isFinite)),load:currentLoad,monthLoad:sum(month,loadOf),trend,rows}},[responses,athletes]);
+  if(loading)return <section className="card">{l.loading}</section>;
+  return <section className="load-page"><div className="section-toolbar"><div><span className="eyebrow">{l.eyebrow}</span><h2>{l.title}</h2><p>{l.intro}</p></div><button className="inline-action" onClick={load}><RefreshCw size={17}/>{t.common.update}</button></div>{error&&<div className="error">{error}</div>}
+    <div className="load-kpis"><article className="card"><Ruler/><span>{l.meters7}</span><strong>{data.meters.toLocaleString()} m</strong></article><article className="card"><Gauge/><span>{l.effort7}</span><strong>{data.avgBorg!=null?data.avgBorg.toFixed(1):'—'}</strong><small>Borg CR10</small></article><article className="card"><Timer/><span>{l.load7}</span><strong>{Math.round(data.load).toLocaleString()} UA</strong><small>{l.formula}</small></article><article className="card"><Activity/><span>{l.load28}</span><strong>{Math.round(data.monthLoad).toLocaleString()} UA</strong>{data.trend!=null&&<small className={data.trend>0?'trend up':'trend down'}>{data.trend>0?<ArrowUpRight size={14}/>:<ArrowDownRight size={14}/>} {Math.abs(data.trend)}% {l.vsPrevious}</small>}</article></div>
+    <section className="card load-table-card"><div className="load-table-head"><div><span className="eyebrow">{l.team}</span><h3>{l.byAthlete}</h3></div><small>{l.explanation}</small></div><div className="load-table"><div className="load-row load-header"><span>{l.athlete}</span><span>{l.sessions}</span><span>{l.meters}</span><span>{l.effort}</span><span>{l.load}</span><span>{l.trend}</span></div>{data.rows.map(r=><div className="load-row" key={r.id}><strong>{r.name}</strong><span>{r.sessions}</span><span>{r.meters.toLocaleString()} m</span><span>{r.avgBorg!=null?r.avgBorg.toFixed(1):'—'}</span><span><b>{Math.round(r.load7).toLocaleString()}</b> UA</span><span className={r.trend==null?'neutral':r.trend>0?'trend up':'trend down'}>{r.trend==null?'—':`${r.trend>0?'+':''}${r.trend}%`}</span></div>)}</div>{!data.rows.length&&<p className="empty-state">{l.none}</p>}</section>
+    <section className="card load-note"><b>{l.noteTitle}</b><p>{l.note}</p></section>
+  </section>;
+}
