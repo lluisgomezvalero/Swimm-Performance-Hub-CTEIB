@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#5b21b6"/>
+  <circle cx="256" cy="256" r="194" fill="#ffffff"/>
+  <text x="256" y="245" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="104" font-weight="900" font-style="italic" letter-spacing="-6" fill="#5b21b6">CTEIB</text>
+  <text x="256" y="326" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="70" font-weight="900" font-style="italic" letter-spacing="-3" fill="#ec0a55">NATACIÓ</text>
+</svg>
