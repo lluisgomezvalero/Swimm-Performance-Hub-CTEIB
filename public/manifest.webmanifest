@@ -1,0 +1,22 @@
+{
+  "name": "CTEIB Natació · Swim Performance Hub",
+  "short_name": "CTEIB Natació",
+  "description": "Seguimiento de wellness, entrenamiento, carga, asistencia y competición del programa de natación CTEIB.",
+  "id": "/Swimm-Performance-Hub-CTEIB/",
+  "start_url": "/Swimm-Performance-Hub-CTEIB/",
+  "scope": "/Swimm-Performance-Hub-CTEIB/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#5b21b6",
+  "lang": "es",
+  "categories": ["sports", "health", "productivity"],
+  "icons": [
+    {
+      "src": "./pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
